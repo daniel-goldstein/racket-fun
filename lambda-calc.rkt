@@ -193,22 +193,20 @@
 (check-expect (λsecond (λmake-pair 1 2)) 2)
 (check-expect (λfirst (λsecond (λmake-pair 1 (λmake-pair 2 3)))) 2)
 
-; linc-cons : LPair -> LPair
+; λinc-cons : λPair -> λPair
 ; copy the first into the second and increment the first
-(define linc-cons
+(define λinc-cons
   (λ (pair)
     (λmake-pair (λadd1 (λfirst pair)) (λfirst pair))))
 
 ; sub1 : λnat -> λnat
 ; produce an λnat that performs given function one less time than the original
-(define lsub1
-  (λ (λnat)
-    (λ (f)
-      (λ (x)
-        (((λsecond ((λnat linc-cons) (λmake-pair λzero λzero))) f) x)))))
-(check-expect (λnat->nat (lsub1 λzero)) 0)
-(check-expect (λnat->nat (lsub1 λone)) 0)
-(check-expect (λnat->nat (lsub1 λthree)) 2)
+(define λsub1
+  (λ (n)
+    (λsecond ((n λinc-cons) (λmake-pair λzero λzero)))))
+(check-expect (λnat->nat (λsub1 λzero)) 0)
+(check-expect (λnat->nat (λsub1 λone)) 0)
+(check-expect (λnat->nat (λsub1 λthree)) 2)
 
 ; We've nearly got it!!
 
@@ -218,7 +216,7 @@
 (define (λfactorial-with-named-recursion n)
   (λif (λzero? n)
        λone
-       (λ* n (λfactorial-with-named-recursion (lsub1 n)))))
+       (λ* n (λfactorial-with-named-recursion (λsub1 n)))))
 (check-expect (λnat->nat (λfactorial-with-named-recursion λzero)) 1)
 (check-expect (λnat->nat (λfactorial-with-named-recursion λthree)) 6)
 
