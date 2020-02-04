@@ -21,7 +21,7 @@
 ; - if
 ; - zero? (predicates/booleans)
 ; - 1 (Natural numbers)
-; - * (arithmetic)
+; - *, sub1 (arithmetic)
 
 ; So define should be easy, right?
 
@@ -41,7 +41,7 @@
 ; - if
 ; - zero? (predicates/booleans)
 ; - 1 (natural numbers)
-; - * (arithmetic)
+; - *, sub1 (arithmetic)
 ; - recursion
 
 
