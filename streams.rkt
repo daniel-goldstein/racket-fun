@@ -29,9 +29,12 @@
 ; (X) [Folder X [List-of X]]
 (define collect (make-folder cons '()))
 
-; to-list : (T) [Stream T] -> [List-of T]
+; stream->list : (T) [Stream T] -> [List-of T]
 ; collects the elements of the stream into a list
-(define (to-list s) (reverse (s collect)))
+(define (stream->list s) (reverse (s collect)))
+
+(define (stream-take s n)
+  (reverse (s (make-folder (lambda (x y) (if (= (length y) n) y (cons x y))) '()))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Some Stream constructors
@@ -39,16 +42,18 @@
 
 ; list->stream : (T) [List T] -> [Stream T]
 ; produces an iterable stream from the list
-(check-expect (to-list (list->stream '())) '())
-(check-expect (to-list (list->stream '(1 2 3 4 5 6))) '(1 2 3 4 5 6))
+(check-expect (stream->list (list->stream '())) '())
+(check-expect (stream->list (list->stream '(1 2 3 4 5 6))) '(1 2 3 4 5 6))
+(check-expect (stream-take (list->stream '(1 2 3 4 5 6)) 3) '(1 2 3))
 (define (list->stream l)
   (λ (a-folder)
     (foldl (folder-f a-folder) (folder-base a-folder) l)))
 
 ; range->stream : Number Number -> [Stream Number]
 ; turns a range of numbers [start, end) into a stream
-(check-expect (to-list (range->stream 0 0)) '())
-(check-expect (to-list (range->stream 0 10)) (build-list 10 identity))
+(check-expect (stream->list (range->stream 0 0)) '())
+(check-expect (stream->list (range->stream 0 10)) (build-list 10 identity))
+(check-expect (stream-take (range->stream 0 10) 5) (build-list 5 identity))
 (define (range->stream start end) ; start < end
   (local [(define (loop n f acc)
             (if (= n end) acc (loop (add1 n) f (f n acc))))]
@@ -77,7 +82,7 @@
 
 ; stream-filter : (T) [T -> Boolean] [Stream T] -> [Stream T]
 ; filters out any elements of the stream that do not pass pred
-(check-expect (to-list (stream-filter even? (stream-map sqr (list->stream (list 1 2 3 4 5)))))
+(check-expect (stream->list (stream-filter even? (stream-map sqr (list->stream (list 1 2 3 4 5)))))
               (list 4 16))
 (define (stream-filter pred s)
   (λ (a-folder)
