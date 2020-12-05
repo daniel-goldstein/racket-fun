@@ -1,16 +1,16 @@
 ;; The first three lines of this file were inserted by DrRacket. They record metadata
 ;; about the language level of this file in a form that our tools can easily process.
 #reader(lib "htdp-intermediate-lambda-reader.ss" "lang")((modname streams) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
-; A Stream is something that can be Folded
+; A Stream is something that can be folded
 ; So...
 
-; A (T) [Stream T] = (U) [[Folder T U] -> U] 
+; A {T} [Stream T] = {U} [[Folder T U] -> U] 
 ; and represents some stream of elements of
 ; type T. It is a function that given some
 ; folding operation and base case can be
 ; consumed to produce a single U
 
-; (T U) [Folder T U]
+; {T U} [Folder T U]
 ; f : T U -> U
 ; base : U
 (define-struct folder (f base))
@@ -26,21 +26,26 @@
 ; sums the elements of the given stream
 (define (stream-sum s) (s sum))
 
-; (X) [Folder X [List-of X]]
+; {X} [Folder X [List-of X]]
 (define collect (make-folder cons '()))
 
-; stream->list : (T) [Stream T] -> [List-of T]
+; stream->list : {T} [Stream T] -> [List-of T]
 ; collects the elements of the stream into a list
 (define (stream->list s) (reverse (s collect)))
 
+; stream-take : {T} [Stream T] Number -> [List-of T]
+; takes n elements from the front of s
 (define (stream-take s n)
-  (reverse (s (make-folder (lambda (x y) (if (= (length y) n) y (cons x y))) '()))))
+  (reverse (s (make-folder (lambda (x y) (if (= (length y) n)
+                                             y
+                                             (cons x y)))
+                           '()))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Some Stream constructors
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; list->stream : (T) [List T] -> [Stream T]
+; list->stream : {T} [List T] -> [Stream T]
 ; produces an iterable stream from the list
 (check-expect (stream->list (list->stream '())) '())
 (check-expect (stream->list (list->stream '(1 2 3 4 5 6))) '(1 2 3 4 5 6))
@@ -64,14 +69,14 @@
 ; Some Stream constructors
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; stream-fold : (T U) [T U -> U] U [Stream T] -> U
+; stream-fold : {T U} [T U -> U] U [Stream T] -> U
 ; folds the elements of the stream according to the given
 ; function and base case
 (check-expect (stream-fold + 0 (range->stream 0 10)) 45)
 (define (stream-fold f base s)
   (s (make-folder f base)))
 
-; stream-map : (T U) [T -> U] [Stream T] -> [Stream U]
+; stream-map : {T U} [T -> U] [Stream T] -> [Stream U]
 ; applies f to all elements of the stream as they are produced
 (check-expect (stream-sum (stream-map sqr (range->stream 0 10))) 285)
 (check-expect (stream-sum (stream-map sqr (list->stream (list 1 2 3)))) 14)
@@ -80,7 +85,7 @@
     (stream-fold (λ (t u) ((folder-f a-folder) (f t) u))
                  (folder-base a-folder) s)))
 
-; stream-filter : (T) [T -> Boolean] [Stream T] -> [Stream T]
+; stream-filter : {T} [T -> Boolean] [Stream T] -> [Stream T]
 ; filters out any elements of the stream that do not pass pred
 (check-expect (stream->list (stream-filter even? (stream-map sqr (list->stream (list 1 2 3 4 5)))))
               (list 4 16))
@@ -89,14 +94,14 @@
     (stream-fold (λ (t u) (if (pred t) ((folder-f a-folder) t u) u))
                  (folder-base a-folder) s)))
 
-; stream-ormap : (T) [T -> Boolean] [Stream T] -> Boolean
+; stream-ormap : {T} [T -> Boolean] [Stream T] -> Boolean
 ; do any elements of the stream pass pred?
 (check-expect (stream-ormap positive? (range->stream -10 10)) true)
 (check-expect (stream-ormap positive? (range->stream -10 -5)) false)
 (define (stream-ormap pred s)
   (stream-fold (λ (t result) (or (pred t) result)) false s))
 
-; stream-andmap : (T) [T -> Boolean] [Stream T] -> Boolean
+; stream-andmap : {T} [T -> Boolean] [Stream T] -> Boolean
 ; do all elements of the stream pass pred?
 (check-expect (stream-andmap positive? (stream-map sqr (range->stream -10 -5))) true)
 (check-expect (stream-andmap positive? (range->stream -10 10)) false)
