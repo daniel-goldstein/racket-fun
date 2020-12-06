@@ -53,7 +53,7 @@
     (λ (f base) (loop start f base))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; Some Stream constructors
+; Stream processing
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; stream-fold : {T U} [T U -> U] U [Stream T] -> U
