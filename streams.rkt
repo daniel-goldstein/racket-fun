@@ -4,42 +4,31 @@
 ; A Stream is something that can be folded
 ; So...
 
-; A {T} [Stream T] = {U} [[Folder T U] -> U] 
+; A {T} [Stream T] = {U} [[T U -> U] U -> U] 
 ; and represents some stream of elements of
 ; type T. It is a function that given some
 ; folding operation and base case can be
 ; consumed to produce a single U
 
-; {T U} [Folder T U]
-; f : T U -> U
-; base : U
-(define-struct folder (f base))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Some Folder definitions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; sum : [Folder Number Number]
-(define sum (make-folder + 0))
-
 ; stream-sum : [Stream Number] -> Number
 ; sums the elements of the given stream
-(define (stream-sum s) (s sum))
-
-; {X} [Folder X [List-of X]]
-(define collect (make-folder cons '()))
+(define (stream-sum s) (s + 0))
 
 ; stream->list : {T} [Stream T] -> [List-of T]
 ; collects the elements of the stream into a list
-(define (stream->list s) (reverse (s collect)))
+(define (stream->list s) (reverse (s cons '())))
 
 ; stream-take : {T} [Stream T] Number -> [List-of T]
 ; takes n elements from the front of s
 (define (stream-take s n)
-  (reverse (s (make-folder (lambda (x y) (if (= (length y) n)
-                                             y
-                                             (cons x y)))
-                           '()))))
+  (reverse (s (lambda (x y) (if (= (length y) n)
+                                y
+                                (cons x y)))
+              '())))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Some Stream constructors
@@ -51,8 +40,7 @@
 (check-expect (stream->list (list->stream '(1 2 3 4 5 6))) '(1 2 3 4 5 6))
 (check-expect (stream-take (list->stream '(1 2 3 4 5 6)) 3) '(1 2 3))
 (define (list->stream l)
-  (λ (a-folder)
-    (foldl (folder-f a-folder) (folder-base a-folder) l)))
+  (λ (f base) (foldl f base l)))
 
 ; range->stream : Number Number -> [Stream Number]
 ; turns a range of numbers [start, end) into a stream
@@ -62,8 +50,7 @@
 (define (range->stream start end) ; start < end
   (local [(define (loop n f acc)
             (if (= n end) acc (loop (add1 n) f (f n acc))))]
-    (λ (a-folder)
-      (loop start (folder-f a-folder) (folder-base a-folder)))))
+    (λ (f base) (loop start f base))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Some Stream constructors
@@ -73,26 +60,23 @@
 ; folds the elements of the stream according to the given
 ; function and base case
 (check-expect (stream-fold + 0 (range->stream 0 10)) 45)
-(define (stream-fold f base s)
-  (s (make-folder f base)))
+(define (stream-fold f base s) (s f base))
 
 ; stream-map : {T U} [T -> U] [Stream T] -> [Stream U]
 ; applies f to all elements of the stream as they are produced
 (check-expect (stream-sum (stream-map sqr (range->stream 0 10))) 285)
 (check-expect (stream-sum (stream-map sqr (list->stream (list 1 2 3)))) 14)
 (define (stream-map f s)
-  (λ (a-folder)
-    (stream-fold (λ (t u) ((folder-f a-folder) (f t) u))
-                 (folder-base a-folder) s)))
+  (λ (fold-f base)
+    (stream-fold (λ (t u) (fold-f (f t) u)) base s)))
 
 ; stream-filter : {T} [T -> Boolean] [Stream T] -> [Stream T]
 ; filters out any elements of the stream that do not pass pred
 (check-expect (stream->list (stream-filter even? (stream-map sqr (list->stream (list 1 2 3 4 5)))))
               (list 4 16))
 (define (stream-filter pred s)
-  (λ (a-folder)
-    (stream-fold (λ (t u) (if (pred t) ((folder-f a-folder) t u) u))
-                 (folder-base a-folder) s)))
+  (λ (f base)
+    (stream-fold (λ (t u) (if (pred t) (f t u) u)) base s)))
 
 ; stream-ormap : {T} [T -> Boolean] [Stream T] -> Boolean
 ; do any elements of the stream pass pred?
