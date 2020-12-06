@@ -11,7 +11,7 @@
 ; consumed to produce a single U
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; Some Folder definitions
+; Some ways to fold a stream
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; stream-sum : [Stream Number] -> Number
